@@ -8,6 +8,8 @@ const GITHUB_URL = process.env.REACT_APP_GITHUB_URL;
 export const GithubProvider = ({children}) => {
     const inititalState = {
         users: [],
+        user: {},
+        repos: [],
         isLoading: false
     }
 
@@ -25,6 +27,41 @@ export const GithubProvider = ({children}) => {
         dispatch({
             type: 'GET_USERS',
             payload: items
+        })
+    }
+
+
+    const getUser = async (username) => {
+        setLoading();
+
+
+        const res = await fetch(`${GITHUB_URL}/users/${username}`);
+
+        if(res.status === 404){
+            window.location = '/notfound'
+        }else{
+            const data = await res.json();
+            dispatch({
+                type: 'GET_USER',
+                payload: data
+            })
+        }
+    }
+
+    const getUserRepos = async (username) => {
+        setLoading();
+
+        const params = new URLSearchParams({
+            sort: 'created',
+            per_page: 10
+        })
+
+        const res = await fetch(`${GITHUB_URL}/users/${username}/repos?${params}`);
+        const data = await res.json();
+
+        dispatch({
+            type: 'GET_REPOS',
+            payload: data
         })
     }
 
@@ -51,10 +88,14 @@ export const GithubProvider = ({children}) => {
 
     return <GithubContext.Provider value={{
         users: state.users,
+        user: state.user,
+        repos: state.repos,
         isLoading: state.isLoading,
         fetchUsers,
         searchUsers,
-        clearUsers
+        getUser,
+        clearUsers,
+        getUserRepos
     }}>
         {children}
     </GithubContext.Provider>
